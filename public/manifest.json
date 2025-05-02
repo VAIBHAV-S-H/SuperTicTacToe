@@ -1,0 +1,24 @@
+{
+  "name": "Super Tic Tac Toe",
+  "short_name": "Tic Tac Toe",
+  "description": "An oceanic-themed strategic Tic Tac Toe game with nested boards",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#001440",
+  "theme_color": "#003580",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
