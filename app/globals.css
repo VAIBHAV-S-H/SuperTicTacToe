@@ -215,63 +215,142 @@
 
 /* Mobile optimizations */
 @media (max-width: 640px) {
-  .mobile-game-board {
-    gap: 1px !important;
-    padding: 0 !important;
-    max-width: 100% !important;
-    width: 95% !important;
-  }
-
-  .mobile-mini-board {
-    padding: 1px !important;
-    gap: 1px !important;
-  }
-
-  .mobile-text {
-    font-size: 0.875rem !important;
-  }
-
-  .mobile-controls {
-    flex-direction: column !important;
-    gap: 0.5rem !important;
-    width: 95% !important;
-    margin-bottom: 0.5rem !important;
-  }
-
-  /* Make sure all UI elements have large enough touch targets */
+  /* Ensure proper touch targets */
   button,
-  a,
-  input,
-  select,
-  textarea {
-    min-height: 44px;
-    min-width: 44px;
-    padding: 8px !important;
+  a {
+    min-height: 36px;
+    min-width: 36px;
   }
 
-  /* Fix potential zoom issues on input */
+  /* Prevent text zoom on input focus */
   input,
-  select,
   textarea,
+  select,
   button {
     font-size: 16px !important;
   }
 
-  /* Ensure content doesn't overflow the viewport */
-  .content-container {
-    max-height: 100vh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Fix for iOS rubber-banding/bounce effect */
+  /* Prevent overscroll */
   html,
   body {
+    overscroll-behavior: none;
     position: fixed;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
-    width: 100vw;
-    height: 100vh;
   }
+
+  /* Ensure content fits in viewport */
+  .mobile-layout {
+    max-width: 100vw;
+    max-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Optimize game board for mobile */
+  .mobile-game-board {
+    width: 100% !important;
+    max-width: 100vw !important;
+    padding: 0 !important;
+    gap: 1px !important;
+  }
+
+  /* Optimize text sizes for mobile */
+  h1 {
+    font-size: 1.75rem !important;
+  }
+
+  h2 {
+    font-size: 1.5rem !important;
+  }
+
+  p {
+    font-size: 0.875rem !important;
+  }
+
+  /* Optimize ocean background for mobile */
+  .water-overlay {
+    opacity: 0.2 !important;
+  }
+}
+
+/* Add this to the end of your existing CSS */
+.mobile-layout {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+
+.desktop-layout {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.mobile-game-board {
+  gap: 1px !important;
+  padding: 0 !important;
+  max-width: 100% !important;
+  width: 95% !important;
+}
+
+.mobile-mini-board {
+  padding: 1px !important;
+  gap: 1px !important;
+}
+
+.mobile-text {
+  font-size: 0.875rem !important;
+}
+
+.mobile-controls {
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+  width: 95% !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Make sure all UI elements have large enough touch targets */
+button,
+a,
+input,
+select,
+textarea {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px !important;
+}
+
+/* Fix potential zoom issues on input */
+input,
+select,
+textarea,
+button {
+  font-size: 16px !important;
+}
+
+/* Ensure content doesn't overflow the viewport */
+.content-container {
+  max-height: 100vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix for iOS rubber-banding/bounce effect */
+html,
+body {
+  position: fixed;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+}
+\
 }
 
 /* Improve touch experience */

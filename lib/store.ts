@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { calculateWinner, findBestMove } from "./game-utils"
 import type { Board, GameMode, Player } from "./types"
+import { multiplayerService } from "./multiplayer-service"
 
 interface GameState {
   gameMode: GameMode | null
@@ -10,11 +11,17 @@ interface GameState {
   miniWinners: Array<string | null>
   gameWinner: string | null
   moveHistory: Array<{ boardIndex: number; squareIndex: number; player: Player }>
+  isMyTurn: boolean
+  friendCode: string | null
+  isHost: boolean
 
   setGameMode: (mode: GameMode) => void
   makeMove: (boardIndex: number, squareIndex: number) => void
   resetGame: () => void
   aiMove: () => void
+  createMultiplayerGame: () => string
+  joinMultiplayerGame: (code: string) => void
+  leaveMultiplayerGame: () => void
 }
 
 // Initialize a 3x3 grid of 3x3 mini boards
@@ -32,13 +39,21 @@ export const useGameStore = create<GameState>((set, get) => ({
   miniWinners: Array(9).fill(null),
   gameWinner: null,
   moveHistory: [],
+  isMyTurn: true,
+  friendCode: null,
+  isHost: false,
 
   setGameMode: (mode) => {
     set({ gameMode: mode })
   },
 
   makeMove: (boardIndex, squareIndex) => {
-    const { board, currentPlayer, nextBoardIndex, miniWinners, gameWinner, moveHistory } = get()
+    const { board, currentPlayer, nextBoardIndex, miniWinners, gameWinner, moveHistory, gameMode, isMyTurn } = get()
+
+    // In multiplayer mode, only allow moves when it's the player's turn
+    if (gameMode === "multiplayer" && !isMyTurn) {
+      return
+    }
 
     // Don't allow moves if game is over or the board is not active
     if (gameWinner || (nextBoardIndex !== null && nextBoardIndex !== boardIndex)) {
@@ -81,15 +96,30 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Update move history
     const newMoveHistory = [...moveHistory, { boardIndex, squareIndex, player: currentPlayer }]
 
-    // Update state
-    set({
-      board: newBoard,
-      currentPlayer: currentPlayer === "X" ? "O" : "X",
-      nextBoardIndex: newNextBoardIndex,
-      miniWinners: newMiniWinners,
-      gameWinner: newGameWinner,
-      moveHistory: newMoveHistory,
-    })
+    // If in multiplayer mode, send the move to the opponent
+    if (gameMode === "multiplayer") {
+      multiplayerService.sendMove(boardIndex, squareIndex)
+      // Toggle turn in multiplayer mode
+      set({
+        board: newBoard,
+        currentPlayer: currentPlayer === "X" ? "O" : "X",
+        nextBoardIndex: newNextBoardIndex,
+        miniWinners: newMiniWinners,
+        gameWinner: newGameWinner,
+        moveHistory: newMoveHistory,
+        isMyTurn: false,
+      })
+    } else {
+      // Update state for local or AI mode
+      set({
+        board: newBoard,
+        currentPlayer: currentPlayer === "X" ? "O" : "X",
+        nextBoardIndex: newNextBoardIndex,
+        miniWinners: newMiniWinners,
+        gameWinner: newGameWinner,
+        moveHistory: newMoveHistory,
+      })
+    }
   },
 
   resetGame: () => {
@@ -100,6 +130,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       miniWinners: Array(9).fill(null),
       gameWinner: null,
       moveHistory: [],
+      isMyTurn: get().isHost || get().gameMode !== "multiplayer",
     })
   },
 
@@ -112,5 +143,47 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (move) {
       get().makeMove(move.boardIndex, move.squareIndex)
     }
+  },
+
+  createMultiplayerGame: () => {
+    const friendCode = multiplayerService.createGame()
+    set({
+      friendCode,
+      isHost: true,
+      isMyTurn: true,
+      gameMode: "multiplayer",
+      board: createInitialBoard(),
+      currentPlayer: "X",
+      nextBoardIndex: null,
+      miniWinners: Array(9).fill(null),
+      gameWinner: null,
+      moveHistory: [],
+    })
+    return friendCode
+  },
+
+  joinMultiplayerGame: (code) => {
+    multiplayerService.joinGame(code)
+    set({
+      friendCode: code,
+      isHost: false,
+      isMyTurn: false,
+      gameMode: "multiplayer",
+      board: createInitialBoard(),
+      currentPlayer: "X",
+      nextBoardIndex: null,
+      miniWinners: Array(9).fill(null),
+      gameWinner: null,
+      moveHistory: [],
+    })
+  },
+
+  leaveMultiplayerGame: () => {
+    multiplayerService.disconnect()
+    set({
+      friendCode: null,
+      isHost: false,
+      gameMode: null,
+    })
   },
 }))

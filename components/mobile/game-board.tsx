@@ -3,16 +3,15 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useGameStore } from "@/lib/store"
-import MiniBoard from "@/components/mini-board"
+import MiniBoard from "@/components/mobile/mini-board"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
 import SoundToggle from "@/components/sound-toggle"
 import { playSound } from "@/lib/sound-utils"
-import { useMediaQuery } from "@/hooks/use-media-query"
 import MultiplayerChat from "@/components/multiplayer-chat"
 import { useLongPress } from "@/hooks/use-long-press"
 
-export default function GameBoard() {
+export default function MobileGameBoard() {
   const router = useRouter()
   const {
     gameMode,
@@ -25,9 +24,7 @@ export default function GameBoard() {
     resetGame,
     aiMove,
     isMyTurn,
-    friendCode,
   } = useGameStore()
-  const isMobile = useMediaQuery("(max-width: 640px)")
 
   // Long press handlers
   const resetButtonProps = useLongPress(
@@ -81,14 +78,6 @@ export default function GameBoard() {
 
   if (!gameMode) return null
 
-  const handleRestart = () => {
-    // This is now handled by the long press
-  }
-
-  const handleBackToMenu = () => {
-    // This is now handled by the long press
-  }
-
   // Determine game status message and styles
   let statusMessage = ""
   let statusColor = ""
@@ -105,41 +94,44 @@ export default function GameBoard() {
   }
 
   return (
-    <div className="flex flex-col items-center max-w-2xl mx-auto w-full px-2">
+    <div className="flex flex-col items-center w-full px-1 py-2">
       <motion.div
-        className={`mb-4 md:mb-6 flex items-center justify-between w-full ${isMobile ? "mobile-controls" : ""}`}
+        className="mb-2 flex flex-col items-center w-full gap-2"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Button
-          variant="outline"
-          {...backButtonProps}
-          className="shadow-sm text-xs md:text-sm bg-white/80 hover:bg-white/90 border-blue-200 relative overflow-hidden"
-        >
-          <span>Back</span>
-          <span
-            className="absolute inset-0 bg-blue-200/50 origin-left transform scale-x-0 transition-transform"
-            style={{
-              transform: backButtonProps.isLongPressing
-                ? `scaleX(${Math.min(backButtonProps.longPressProgress, 1)})`
-                : "scaleX(0)",
-            }}
-          />
-        </Button>
         <motion.div
-          className={`text-base md:text-xl font-medium ${statusColor} ${isMobile ? "mobile-text" : ""} bg-white/80 px-4 py-2 rounded-full`}
+          className={`text-base font-medium ${statusColor} bg-white/80 px-4 py-2 rounded-full w-full text-center`}
           animate={{ scale: [1, 1.05, 1] }}
           transition={{ duration: 0.5, repeat: 0, repeatType: "reverse" }}
         >
           {statusMessage}
         </motion.div>
-        <div className="flex items-center gap-1 md:gap-2">
+
+        <div className="flex items-center justify-between w-full">
+          <Button
+            variant="outline"
+            {...backButtonProps}
+            className="shadow-sm text-xs bg-white/80 hover:bg-white/90 border-blue-200 relative overflow-hidden"
+          >
+            <span>Back</span>
+            <span
+              className="absolute inset-0 bg-blue-200/50 origin-left transform scale-x-0 transition-transform"
+              style={{
+                transform: backButtonProps.isLongPressing
+                  ? `scaleX(${Math.min(backButtonProps.longPressProgress, 1)})`
+                  : "scaleX(0)",
+              }}
+            />
+          </Button>
+
           <SoundToggle />
+
           <Button
             variant="outline"
             {...resetButtonProps}
-            className="shadow-sm text-xs md:text-sm bg-white/80 hover:bg-white/90 border-blue-200 relative overflow-hidden"
+            className="shadow-sm text-xs bg-white/80 hover:bg-white/90 border-blue-200 relative overflow-hidden"
           >
             <span>Restart</span>
             <span
@@ -155,7 +147,7 @@ export default function GameBoard() {
       </motion.div>
 
       <motion.div
-        className={`grid grid-cols-3 gap-1 md:gap-2 w-full aspect-square max-w-xl ${isMobile ? "mobile-game-board" : ""}`}
+        className="grid grid-cols-3 gap-1 w-full aspect-square"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
@@ -168,7 +160,6 @@ export default function GameBoard() {
               boardIndex={boardIndex}
               isActive={nextBoardIndex === null || nextBoardIndex === boardIndex}
               winner={miniWinners[boardIndex]}
-              isMobile={isMobile}
             />
           ))}
       </motion.div>
@@ -176,13 +167,13 @@ export default function GameBoard() {
       <AnimatePresence>
         {gameWinner && (
           <motion.div
-            className="mt-4 md:mt-8 text-center ocean-card p-4 md:p-6 rounded-lg"
+            className="mt-4 text-center ocean-card p-4 rounded-lg w-full"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
             <motion.h2
-              className={`text-xl md:text-2xl font-bold mb-4 ${
+              className={`text-xl font-bold mb-4 ${
                 gameWinner === "draw" ? "text-gray-600" : gameWinner === "X" ? "text-game-x" : "text-game-o"
               }`}
               initial={{ scale: 0.9 }}

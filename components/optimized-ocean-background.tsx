@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useEffect, useRef, useState } from "react"
 import { motion } from "framer-motion"
-import { useMediaQuery } from "@/hooks/use-media-query"
+import { useDeviceDetect } from "@/hooks/use-device-detect"
 
 // Extremely simplified sea creatures with minimal animation
 const MoonJellyfish = ({ style }: { style?: React.CSSProperties }) => (
@@ -88,118 +88,22 @@ const SeaTurtle = ({ style }: { style?: React.CSSProperties }) => (
   </div>
 )
 
-const Seahorse = ({ style }: { style?: React.CSSProperties }) => (
-  <div className="absolute" style={style}>
-    <svg width="40" height="80" viewBox="0 0 40 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Simple body curve */}
-      <path
-        d="M20 10C25 10 30 20 30 30C30 40 25 45 20 45C15 45 10 50 10 60C10 70 15 75 20 75"
-        stroke="#FFC107"
-        strokeWidth="6"
-        strokeLinecap="round"
-      />
-
-      {/* Simple head */}
-      <circle cx="20" cy="10" r="6" fill="#FFC107" />
-
-      {/* Eye */}
-      <circle cx="18" cy="8" r="1" fill="black" />
-    </svg>
-  </div>
-)
-
-const Nudibranch = ({ style }: { style?: React.CSSProperties }) => (
-  <div className="absolute" style={style}>
-    <svg width="60" height="30" viewBox="0 0 60 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Simple body */}
-      <path d="M10 15C10 10 20 5 30 5C40 5 50 10 50 15C50 20 40 25 30 25C20 25 10 20 10 15Z" fill="#FF4081" />
-
-      {/* Simple rhinophores */}
-      <path d="M45 10L45 5" stroke="#F50057" strokeWidth="2" strokeLinecap="round" />
-      <path d="M50 10L50 5" stroke="#F50057" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  </div>
-)
-
-const BlanketOctopus = ({ style }: { style?: React.CSSProperties }) => (
-  <div className="absolute" style={style}>
-    <svg width="120" height="100" viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Simple blanket/cape */}
-      <path
-        d="M60 20C80 20 100 30 110 50C100 70 80 80 60 80C40 80 20 70 10 50C20 30 40 20 60 20Z"
-        fill="rgba(255, 255, 255, 0.3)"
-        stroke="rgba(186, 104, 200, 0.4)"
-        strokeWidth="1"
-      />
-
-      {/* Simple body */}
-      <ellipse cx="60" cy="30" rx="15" ry="10" fill="#9C27B0" />
-
-      {/* Eyes */}
-      <circle cx="55" cy="28" r="3" fill="white" />
-      <circle cx="65" cy="28" r="3" fill="white" />
-      <circle cx="55" cy="28" r="1" fill="black" />
-      <circle cx="65" cy="28" r="1" fill="black" />
-
-      {/* Simple tentacles */}
-      <path d="M50 40L40 60" stroke="#9C27B0" strokeWidth="3" strokeLinecap="round" />
-      <path d="M60 40L60 60" stroke="#9C27B0" strokeWidth="3" strokeLinecap="round" />
-      <path d="M70 40L80 60" stroke="#9C27B0" strokeWidth="3" strokeLinecap="round" />
-    </svg>
-  </div>
-)
-
-const Pufferfish = ({ style }: { style?: React.CSSProperties }) => (
-  <div className="absolute" style={style}>
-    <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Simple body */}
-      <circle cx="30" cy="30" r="20" fill="#FFC107" />
-
-      {/* Simple spikes */}
-      <path d="M30 10L30 5" stroke="#FFA000" strokeWidth="2" strokeLinecap="round" />
-      <path d="M30 50L30 55" stroke="#FFA000" strokeWidth="2" strokeLinecap="round" />
-      <path d="M10 30L5 30" stroke="#FFA000" strokeWidth="2" strokeLinecap="round" />
-      <path d="M50 30L55 30" stroke="#FFA000" strokeWidth="2" strokeLinecap="round" />
-      <path d="M15 15L10 10" stroke="#FFA000" strokeWidth="2" strokeLinecap="round" />
-      <path d="M45 15L50 10" stroke="#FFA000" strokeWidth="2" strokeLinecap="round" />
-      <path d="M15 45L10 50" stroke="#FFA000" strokeWidth="2" strokeLinecap="round" />
-      <path d="M45 45L50 50" stroke="#FFA000" strokeWidth="2" strokeLinecap="round" />
-
-      {/* Eyes */}
-      <circle cx="20" cy="25" r="3" fill="white" />
-      <circle cx="40" cy="25" r="3" fill="white" />
-      <circle cx="20" cy="25" r="1" fill="black" />
-      <circle cx="40" cy="25" r="1" fill="black" />
-
-      {/* Mouth */}
-      <path d="M25 35Q30 38 35 35" stroke="black" strokeWidth="1" strokeLinecap="round" />
-    </svg>
-  </div>
-)
-
-const Bubble = ({ style }: { style?: React.CSSProperties }) => (
-  <div
-    className="absolute rounded-full bg-white/20"
-    style={{ ...style, width: style?.width || "10px", height: style?.height || "10px" }}
-  />
-)
-
-// List of all sea creatures
-const seaCreatures = [MoonJellyfish, Mandarinfish, Dolphin, SeaTurtle, Seahorse, Nudibranch, BlanketOctopus, Pufferfish]
+// List of all sea creatures - reduced for mobile
+const seaCreatures = [MoonJellyfish, Mandarinfish, Dolphin, SeaTurtle]
 
 export default function OptimizedOceanBackground() {
   const [elements, setElements] = useState<React.ReactNode[]>([])
-  const isMobile = useMediaQuery("(max-width: 640px)")
+  const { isMobile, isReady } = useDeviceDetect()
   const initialized = useRef(false)
 
   // Generate all static elements once
   useEffect(() => {
-    if (initialized.current) return
+    if (!isReady || initialized.current) return
     initialized.current = true
 
     const newElements = []
-    const bubbleCount = isMobile ? 10 : 20
-    const creatureCount = isMobile ? 3 : 5
+    const bubbleCount = isMobile ? 6 : 15
+    const creatureCount = isMobile ? 2 : 4
 
     // Generate bubbles
     for (let i = 0; i < bubbleCount; i++) {
@@ -272,7 +176,7 @@ export default function OptimizedOceanBackground() {
     }
 
     setElements(newElements)
-  }, [isMobile])
+  }, [isMobile, isReady])
 
   return (
     <div className="fixed inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
