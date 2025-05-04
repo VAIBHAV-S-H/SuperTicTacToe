@@ -22,6 +22,7 @@ interface GameState {
   createMultiplayerGame: () => string
   joinMultiplayerGame: (code: string) => void
   leaveMultiplayerGame: () => void
+  handleOpponentMove: (boardIndex: number, squareIndex: number) => void
 }
 
 // Initialize a 3x3 grid of 3x3 mini boards
@@ -99,6 +100,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     // If in multiplayer mode, send the move to the opponent
     if (gameMode === "multiplayer") {
       multiplayerService.sendMove(boardIndex, squareIndex)
+
       // Toggle turn in multiplayer mode
       set({
         board: newBoard,
@@ -107,7 +109,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         miniWinners: newMiniWinners,
         gameWinner: newGameWinner,
         moveHistory: newMoveHistory,
-        isMyTurn: false,
+        isMyTurn: false, // It's now the opponent's turn
       })
     } else {
       // Update state for local or AI mode
@@ -122,7 +124,59 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
+  handleOpponentMove: (boardIndex, squareIndex) => {
+    const { board, currentPlayer, nextBoardIndex, miniWinners, gameWinner, moveHistory } = get()
+
+    // Don't process opponent moves if the game is over
+    if (gameWinner) {
+      return
+    }
+
+    // Create a new board with the opponent's move
+    const newBoard = [...board]
+    newBoard[boardIndex] = [...board[boardIndex]]
+    newBoard[boardIndex][squareIndex] = currentPlayer
+
+    // Check if this move won the mini-board
+    const newMiniWinners = [...miniWinners]
+    if (!miniWinners[boardIndex]) {
+      const winner = calculateWinner(newBoard[boardIndex])
+      if (winner) {
+        newMiniWinners[boardIndex] = winner
+      }
+    }
+
+    // Determine the next board to play in
+    let newNextBoardIndex = squareIndex
+
+    // If the next board is already won or full, allow free choice
+    if (newMiniWinners[newNextBoardIndex] || board[newNextBoardIndex].every((square) => square !== null)) {
+      newNextBoardIndex = null
+    }
+
+    // Check if the game is won
+    let newGameWinner = null
+    if (newMiniWinners.filter(Boolean).length >= 5) {
+      newGameWinner = calculateWinner(newMiniWinners)
+    }
+
+    // Update move history
+    const newMoveHistory = [...moveHistory, { boardIndex, squareIndex, player: currentPlayer }]
+
+    // Update state and set isMyTurn to true since it's now the player's turn
+    set({
+      board: newBoard,
+      currentPlayer: currentPlayer === "X" ? "O" : "X",
+      nextBoardIndex: newNextBoardIndex,
+      miniWinners: newMiniWinners,
+      gameWinner: newGameWinner,
+      moveHistory: newMoveHistory,
+      isMyTurn: true, // It's now the player's turn
+    })
+  },
+
   resetGame: () => {
+    const { gameMode, isHost } = get()
     set({
       board: createInitialBoard(),
       currentPlayer: "X",
@@ -130,7 +184,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       miniWinners: Array(9).fill(null),
       gameWinner: null,
       moveHistory: [],
-      isMyTurn: get().isHost || get().gameMode !== "multiplayer",
+      isMyTurn: gameMode !== "multiplayer" || isHost, // Host (X) goes first in multiplayer
     })
   },
 
@@ -147,10 +201,18 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   createMultiplayerGame: () => {
     const friendCode = multiplayerService.createGame()
+
+    // Register callback for opponent moves
+    multiplayerService.registerCallbacks({
+      onOpponentMove: (boardIndex, squareIndex) => {
+        get().handleOpponentMove(boardIndex, squareIndex)
+      },
+    })
+
     set({
       friendCode,
       isHost: true,
-      isMyTurn: true,
+      isMyTurn: true, // Host plays as X and goes first
       gameMode: "multiplayer",
       board: createInitialBoard(),
       currentPlayer: "X",
@@ -164,10 +226,18 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   joinMultiplayerGame: (code) => {
     multiplayerService.joinGame(code)
+
+    // Register callback for opponent moves
+    multiplayerService.registerCallbacks({
+      onOpponentMove: (boardIndex, squareIndex) => {
+        get().handleOpponentMove(boardIndex, squareIndex)
+      },
+    })
+
     set({
       friendCode: code,
       isHost: false,
-      isMyTurn: false,
+      isMyTurn: false, // Guest plays as O and goes second
       gameMode: "multiplayer",
       board: createInitialBoard(),
       currentPlayer: "X",

@@ -13,9 +13,15 @@ interface MiniBoardProps {
 }
 
 export default function MiniBoard({ boardIndex, isActive, winner, isMobile = false }: MiniBoardProps) {
-  const { board, makeMove, currentPlayer } = useGameStore()
+  const { board, makeMove, currentPlayer, gameMode, isMyTurn } = useGameStore()
 
   const handleSquareClick = (squareIndex: number) => {
+    // In multiplayer mode, only allow clicks when it's the player's turn
+    if (gameMode === "multiplayer" && !isMyTurn) {
+      playSound("boardSelect")
+      return
+    }
+
     if (isActive && !winner) {
       makeMove(boardIndex, squareIndex)
     } else if (!isActive && !winner) {

@@ -26,6 +26,7 @@ export default function GameBoard() {
     aiMove,
     isMyTurn,
     friendCode,
+    isHost,
   } = useGameStore()
   const isMobile = useMediaQuery("(max-width: 640px)")
 
@@ -81,14 +82,6 @@ export default function GameBoard() {
 
   if (!gameMode) return null
 
-  const handleRestart = () => {
-    // This is now handled by the long press
-  }
-
-  const handleBackToMenu = () => {
-    // This is now handled by the long press
-  }
-
   // Determine game status message and styles
   let statusMessage = ""
   let statusColor = ""
@@ -97,7 +90,8 @@ export default function GameBoard() {
     statusMessage = gameWinner === "draw" ? "Draw!" : `Winner: ${gameWinner}`
     statusColor = gameWinner === "X" ? "text-game-x" : gameWinner === "O" ? "text-game-o" : "text-gray-600"
   } else if (gameMode === "multiplayer") {
-    statusMessage = isMyTurn ? `Your Turn (${currentPlayer})` : `Opponent's Turn (${currentPlayer})`
+    const playerSymbol = isHost ? "X" : "O"
+    statusMessage = isMyTurn ? `Your Turn (${playerSymbol})` : `Opponent's Turn (${currentPlayer})`
     statusColor = currentPlayer === "X" ? "text-game-x" : "text-game-o"
   } else {
     statusMessage = `Current Player: ${currentPlayer}`
@@ -166,7 +160,9 @@ export default function GameBoard() {
             <MiniBoard
               key={boardIndex}
               boardIndex={boardIndex}
-              isActive={nextBoardIndex === null || nextBoardIndex === boardIndex}
+              isActive={
+                (nextBoardIndex === null || nextBoardIndex === boardIndex) && (gameMode !== "multiplayer" || isMyTurn)
+              }
               winner={miniWinners[boardIndex]}
               isMobile={isMobile}
             />

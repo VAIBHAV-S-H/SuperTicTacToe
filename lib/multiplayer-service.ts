@@ -44,6 +44,7 @@ class MultiplayerService {
     onGameStateChange?: (state: GameState) => void
     onChatMessage?: (message: ChatMessage) => void
     onError?: (error: string) => void
+    onOpponentMove?: (boardIndex: number, squareIndex: number) => void
   } = {}
 
   // Initialize the service
@@ -58,6 +59,7 @@ class MultiplayerService {
     onGameStateChange?: (state: GameState) => void
     onChatMessage?: (message: ChatMessage) => void
     onError?: (error: string) => void
+    onOpponentMove?: (boardIndex: number, squareIndex: number) => void
   }) {
     this.callbacks = { ...this.callbacks, ...callbacks }
   }
@@ -90,17 +92,22 @@ class MultiplayerService {
         if (this.callbacks.onConnectionStatusChange) {
           this.callbacks.onConnectionStatusChange("waiting")
         }
+
+        // FIXED: Simulate the host getting connected after a short delay
+        // This simulates a guest joining the game
+        setTimeout(() => {
+          if (this.callbacks.onConnectionStatusChange) {
+            this.callbacks.onConnectionStatusChange("connected")
+          }
+        }, 3000)
       } else {
+        // Guest connects immediately
         if (this.callbacks.onConnectionStatusChange) {
           this.callbacks.onConnectionStatusChange("connected")
         }
 
-        // Simulate the host getting connected as well
-        setTimeout(() => {
-          if (this.callbacks.onConnectionStatusChange && isHost) {
-            this.callbacks.onConnectionStatusChange("connected")
-          }
-        }, 1500)
+        // Simulate sending a notification to the host that a guest has joined
+        // In a real implementation, this would be handled by the server
       }
     }, 1000)
   }
@@ -121,6 +128,16 @@ class MultiplayerService {
   sendMove(boardIndex: number, squareIndex: number) {
     // In a real implementation, this would send the move through the WebSocket
     console.log(`Sending move: board ${boardIndex}, square ${squareIndex}`)
+
+    // For demo purposes, simulate receiving the move after a delay
+    setTimeout(() => {
+      if (this.callbacks.onOpponentMove) {
+        // Simulate opponent's move
+        const opponentBoardIndex = Math.floor(Math.random() * 9)
+        const opponentSquareIndex = Math.floor(Math.random() * 9)
+        this.callbacks.onOpponentMove(opponentBoardIndex, opponentSquareIndex)
+      }
+    }, 1500)
   }
 
   // Send a chat message
