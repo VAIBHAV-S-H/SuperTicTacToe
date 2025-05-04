@@ -14,6 +14,7 @@ interface GameState {
   isMyTurn: boolean
   friendCode: string | null
   isHost: boolean
+  playerSymbol: Player | null
 
   setGameMode: (mode: GameMode) => void
   makeMove: (boardIndex: number, squareIndex: number) => void
@@ -43,17 +44,31 @@ export const useGameStore = create<GameState>((set, get) => ({
   isMyTurn: true,
   friendCode: null,
   isHost: false,
+  playerSymbol: null,
 
   setGameMode: (mode) => {
     set({ gameMode: mode })
   },
 
   makeMove: (boardIndex, squareIndex) => {
-    const { board, currentPlayer, nextBoardIndex, miniWinners, gameWinner, moveHistory, gameMode, isMyTurn } = get()
+    const {
+      board,
+      currentPlayer,
+      nextBoardIndex,
+      miniWinners,
+      gameWinner,
+      moveHistory,
+      gameMode,
+      isMyTurn,
+      playerSymbol,
+    } = get()
 
     // In multiplayer mode, only allow moves when it's the player's turn
-    if (gameMode === "multiplayer" && !isMyTurn) {
-      return
+    if (gameMode === "multiplayer") {
+      if (!isMyTurn) return
+
+      // In multiplayer, validate that the current player matches the player's symbol
+      if (playerSymbol !== currentPlayer) return
     }
 
     // Don't allow moves if game is over or the board is not active
@@ -177,14 +192,22 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   resetGame: () => {
     const { gameMode, isHost } = get()
+
+    // Determine player's turn based on role in multiplayer
+    const isMyTurn = gameMode !== "multiplayer" || isHost
+
+    // In multiplayer, host is X, guest is O
+    const playerSymbol = gameMode === "multiplayer" ? (isHost ? "X" : "O") : null
+
     set({
       board: createInitialBoard(),
-      currentPlayer: "X",
+      currentPlayer: "X", // X always goes first
       nextBoardIndex: null,
       miniWinners: Array(9).fill(null),
       gameWinner: null,
       moveHistory: [],
-      isMyTurn: gameMode !== "multiplayer" || isHost, // Host (X) goes first in multiplayer
+      isMyTurn,
+      playerSymbol,
     })
   },
 
@@ -213,6 +236,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       friendCode,
       isHost: true,
       isMyTurn: true, // Host plays as X and goes first
+      playerSymbol: "X", // Host is always X
       gameMode: "multiplayer",
       board: createInitialBoard(),
       currentPlayer: "X",
@@ -238,9 +262,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       friendCode: code,
       isHost: false,
       isMyTurn: false, // Guest plays as O and goes second
+      playerSymbol: "O", // Guest is always O
       gameMode: "multiplayer",
       board: createInitialBoard(),
-      currentPlayer: "X",
+      currentPlayer: "X", // X always goes first
       nextBoardIndex: null,
       miniWinners: Array(9).fill(null),
       gameWinner: null,
@@ -253,6 +278,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({
       friendCode: null,
       isHost: false,
+      playerSymbol: null,
       gameMode: null,
     })
   },

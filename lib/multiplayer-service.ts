@@ -35,10 +35,17 @@ export const PRESET_MESSAGES = [
   "I'm enjoying this game!",
 ]
 
+// Simulated server state (for demo purposes)
+const activeGames: Record<string, { hostId: string; guestId?: string }> = {}
+
 class MultiplayerService {
   private socket: WebSocket | null = null
   private gameId: string | null = null
   private playerId: string | null = null
+  private isHost = false
+  private opponentConnected = false
+  private pollInterval: NodeJS.Timeout | null = null
+
   private callbacks: {
     onConnectionStatusChange?: (status: ConnectionStatus) => void
     onGameStateChange?: (state: GameState) => void
@@ -68,7 +75,12 @@ class MultiplayerService {
   createGame(): string {
     this.disconnect()
     this.gameId = nanoid(6).toUpperCase()
-    this.connectToGame(this.gameId, true)
+    this.isHost = true
+
+    // Register the game in our simulated server
+    activeGames[this.gameId] = { hostId: this.playerId! }
+
+    this.connectToGame(this.gameId)
     return this.gameId
   }
 
@@ -76,11 +88,24 @@ class MultiplayerService {
   joinGame(gameId: string): void {
     this.disconnect()
     this.gameId = gameId.toUpperCase()
-    this.connectToGame(this.gameId, false)
+    this.isHost = false
+
+    // Check if game exists in our simulated server
+    if (!activeGames[this.gameId]) {
+      if (this.callbacks.onError) {
+        this.callbacks.onError("Game not found")
+      }
+      return
+    }
+
+    // Register as guest
+    activeGames[this.gameId].guestId = this.playerId!
+
+    this.connectToGame(this.gameId)
   }
 
   // Connect to a game
-  private connectToGame(gameId: string, isHost: boolean) {
+  private connectToGame(gameId: string) {
     if (this.callbacks.onConnectionStatusChange) {
       this.callbacks.onConnectionStatusChange("connecting")
     }
@@ -88,28 +113,62 @@ class MultiplayerService {
     // In a real implementation, this would connect to a WebSocket server
     // For this demo, we'll simulate the connection with a timeout
     setTimeout(() => {
-      if (isHost) {
-        // Host should stay in "waiting" status until a guest joins
+      if (this.isHost) {
+        // Host starts in waiting status
         if (this.callbacks.onConnectionStatusChange) {
           this.callbacks.onConnectionStatusChange("waiting")
         }
 
-        // In a real implementation, the server would notify the host when a guest joins
-        // For demo purposes, we'll add a button in the UI for the host to simulate a guest joining
+        // Start polling to check if a guest has joined
+        this.startPolling()
       } else {
         // Guest connects immediately
+        this.opponentConnected = true
+
         if (this.callbacks.onConnectionStatusChange) {
           this.callbacks.onConnectionStatusChange("connected")
         }
 
-        // Simulate sending a notification to the host that a guest has joined
-        // In a real implementation, this would be handled by the server
+        // Notify the host that a guest has joined (in our simulated server)
+        const game = activeGames[gameId]
+        if (game && game.hostId) {
+          // In a real implementation, the server would notify the host
+          // For demo purposes, the host will discover this through polling
+        }
       }
     }, 1000)
   }
 
+  // Start polling to check for opponent connection
+  private startPolling() {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval)
+    }
+
+    this.pollInterval = setInterval(() => {
+      if (!this.gameId) return
+
+      const game = activeGames[this.gameId]
+
+      if (this.isHost && game && game.guestId && !this.opponentConnected) {
+        // Guest has joined, update host status
+        this.opponentConnected = true
+
+        if (this.callbacks.onConnectionStatusChange) {
+          this.callbacks.onConnectionStatusChange("connected")
+        }
+      }
+    }, 1000) // Poll every second
+  }
+
   // Simulate a guest joining (for demo purposes only)
   simulateGuestJoined() {
+    if (!this.gameId || !this.isHost) return
+
+    // Simulate a guest joining
+    activeGames[this.gameId].guestId = "simulated-guest-" + nanoid(4)
+    this.opponentConnected = true
+
     if (this.callbacks.onConnectionStatusChange) {
       this.callbacks.onConnectionStatusChange("connected")
     }
@@ -121,7 +180,20 @@ class MultiplayerService {
       this.socket.close()
       this.socket = null
     }
+
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval)
+      this.pollInterval = null
+    }
+
+    // Clean up game from simulated server if host
+    if (this.gameId && this.isHost && activeGames[this.gameId]) {
+      delete activeGames[this.gameId]
+    }
+
     this.gameId = null
+    this.opponentConnected = false
+
     if (this.callbacks.onConnectionStatusChange) {
       this.callbacks.onConnectionStatusChange("disconnected")
     }
@@ -129,6 +201,8 @@ class MultiplayerService {
 
   // Send a move to the opponent
   sendMove(boardIndex: number, squareIndex: number) {
+    if (!this.opponentConnected) return
+
     // In a real implementation, this would send the move through the WebSocket
     console.log(`Sending move: board ${boardIndex}, square ${squareIndex}`)
 

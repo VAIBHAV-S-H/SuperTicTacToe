@@ -27,6 +27,7 @@ export default function GameBoard() {
     isMyTurn,
     friendCode,
     isHost,
+    playerSymbol,
   } = useGameStore()
   const isMobile = useMediaQuery("(max-width: 640px)")
 
@@ -90,9 +91,13 @@ export default function GameBoard() {
     statusMessage = gameWinner === "draw" ? "Draw!" : `Winner: ${gameWinner}`
     statusColor = gameWinner === "X" ? "text-game-x" : gameWinner === "O" ? "text-game-o" : "text-gray-600"
   } else if (gameMode === "multiplayer") {
-    const playerSymbol = isHost ? "X" : "O"
-    statusMessage = isMyTurn ? `Your Turn (${playerSymbol})` : `Opponent's Turn (${currentPlayer})`
-    statusColor = currentPlayer === "X" ? "text-game-x" : "text-game-o"
+    if (isMyTurn) {
+      statusMessage = `Your Turn (${playerSymbol})`
+      statusColor = playerSymbol === "X" ? "text-game-x" : "text-game-o"
+    } else {
+      statusMessage = `Opponent's Turn`
+      statusColor = currentPlayer === "X" ? "text-game-x" : "text-game-o"
+    }
   } else {
     statusMessage = `Current Player: ${currentPlayer}`
     statusColor = currentPlayer === "X" ? "text-game-x" : "text-game-o"
