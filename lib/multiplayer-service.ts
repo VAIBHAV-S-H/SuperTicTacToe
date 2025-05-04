@@ -89,17 +89,13 @@ class MultiplayerService {
     // For this demo, we'll simulate the connection with a timeout
     setTimeout(() => {
       if (isHost) {
+        // Host should stay in "waiting" status until a guest joins
         if (this.callbacks.onConnectionStatusChange) {
           this.callbacks.onConnectionStatusChange("waiting")
         }
 
-        // FIXED: Simulate the host getting connected after a short delay
-        // This simulates a guest joining the game
-        setTimeout(() => {
-          if (this.callbacks.onConnectionStatusChange) {
-            this.callbacks.onConnectionStatusChange("connected")
-          }
-        }, 3000)
+        // In a real implementation, the server would notify the host when a guest joins
+        // For demo purposes, we'll add a button in the UI for the host to simulate a guest joining
       } else {
         // Guest connects immediately
         if (this.callbacks.onConnectionStatusChange) {
@@ -110,6 +106,13 @@ class MultiplayerService {
         // In a real implementation, this would be handled by the server
       }
     }, 1000)
+  }
+
+  // Simulate a guest joining (for demo purposes only)
+  simulateGuestJoined() {
+    if (this.callbacks.onConnectionStatusChange) {
+      this.callbacks.onConnectionStatusChange("connected")
+    }
   }
 
   // Disconnect from the current game

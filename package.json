@@ -62,8 +62,8 @@
     "immer": "latest",
     "use-sync-external-store": "latest",
     "framer-motion": "latest",
-    "nanoid": "latest",
-    "zustand": "latest"
+    "zustand": "latest",
+    "nanoid": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

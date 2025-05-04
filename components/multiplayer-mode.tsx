@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation"
 import { useGameStore } from "@/lib/store"
 import { motion } from "framer-motion"
 import { multiplayerService, type ConnectionStatus } from "@/lib/multiplayer-service"
-import { Loader2, Copy, Check } from "lucide-react"
+import { Loader2, Copy, Check, UserPlus } from "lucide-react"
 
 export default function MultiplayerMode() {
   const router = useRouter()
@@ -52,6 +52,11 @@ export default function MultiplayerMode() {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
+  }
+
+  // For demo purposes only - simulate a guest joining
+  const simulateGuestJoined = () => {
+    multiplayerService.simulateGuestJoined()
   }
 
   return (
@@ -128,6 +133,19 @@ export default function MultiplayerMode() {
               </div>
               <Loader2 className="h-6 w-6 text-blue-600 animate-spin mb-2" />
               <p className="text-blue-600 text-sm">Waiting for opponent to join...</p>
+
+              {/* Demo button to simulate a guest joining */}
+              <div className="mt-4 border-t border-gray-200 pt-4 w-full">
+                <p className="text-xs text-gray-500 mb-2 text-center">Demo: Simulate opponent joining</p>
+                <Button
+                  variant="outline"
+                  className="w-full flex items-center justify-center gap-2"
+                  onClick={simulateGuestJoined}
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span>Simulate Opponent Joined</span>
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
